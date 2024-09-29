@@ -43,6 +43,6 @@
 
     <ItemGroup>
         <PackageReference Include="Soenneker.SignalR.Web.Client" Version="2.1.114" />
-        <PackageReference Include="Soenneker.Utils.SingletonDictionary" Version="2.1.486" />
+        <PackageReference Include="Soenneker.Utils.SingletonDictionary" Version="2.1.487" />
     </ItemGroup>
 </Project>
