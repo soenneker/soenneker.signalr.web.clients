@@ -2,8 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Soenneker.Fixtures.Unit;
-using Soenneker.SignalR.Web.Clients.Registrars;
 using Soenneker.Utils.Test;
+using Soenneker.SignalR.Web.Clients.Registrars;
 
 namespace Soenneker.SignalR.Web.Clients.Tests;
 
@@ -26,6 +26,6 @@ public class Fixture : UnitFixture
         IConfiguration config = TestUtil.BuildConfig();
         services.AddSingleton(config);
 
-        services.AddSignalRWebClients();
+        services.AddSignalRWebClientsAsScoped();
     }
 }

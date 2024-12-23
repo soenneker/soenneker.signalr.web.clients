@@ -12,8 +12,13 @@ public static class SignalRWebClientsRegistrar
     /// <summary>
     /// Adds <see cref="ISignalRWebClients"/> as a singleton service. <para/>
     /// </summary>
-    public static void AddSignalRWebClients(this IServiceCollection services)
+    public static void AddSignalRWebClientsAsSingleton(this IServiceCollection services)
     {
         services.TryAddSingleton<ISignalRWebClients, SignalRWebClients>();
+    }
+
+    public static void AddSignalRWebClientsAsScoped(this IServiceCollection services)
+    {
+        services.TryAddScoped<ISignalRWebClients, SignalRWebClients>();
     }
 }
