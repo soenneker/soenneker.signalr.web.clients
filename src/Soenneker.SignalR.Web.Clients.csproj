@@ -14,7 +14,7 @@
         <AssemblyName>Soenneker.SignalR.Web.Clients</AssemblyName>
         <PackageId>Soenneker.SignalR.Web.Clients</PackageId>
         <PackageTags>signalr web clients aspnetcore asp net client websockets singleton dictionary signalrwebclients util csharp dotnet c# .net</PackageTags>
-        <Copyright>Copyright © 2024 Jake Soenneker</Copyright>
+        <Copyright>Copyright © 2024-2025 Jake Soenneker</Copyright>
         <Authors>Jake Soenneker</Authors>
         <Company>https://soenneker.com</Company>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
