@@ -1,3 +1,4 @@
+﻿```
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Soenneker.SignalR.Web.Clients.Abstract;
@@ -12,13 +13,16 @@ public static class SignalRWebClientsRegistrar
     /// <summary>
     /// Adds <see cref="ISignalRWebClients"/> as a singleton service. <para/>
     /// </summary>
-    public static void AddSignalRWebClientsAsSingleton(this IServiceCollection services)
+    public static IServiceCollection AddSignalRWebClientsAsSingleton(this IServiceCollection services)
     {
         services.TryAddSingleton<ISignalRWebClients, SignalRWebClients>();
+        return services;
     }
 
-    public static void AddSignalRWebClientsAsScoped(this IServiceCollection services)
+    public static IServiceCollection AddSignalRWebClientsAsScoped(this IServiceCollection services)
     {
         services.TryAddScoped<ISignalRWebClients, SignalRWebClients>();
+        return services;
     }
 }
+```
