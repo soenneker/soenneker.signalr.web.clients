@@ -1,5 +1,4 @@
-﻿```
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Soenneker.SignalR.Web.Clients.Abstract;
 
@@ -25,4 +24,3 @@ public static class SignalRWebClientsRegistrar
         return services;
     }
 }
-```
