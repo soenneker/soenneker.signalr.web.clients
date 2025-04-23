@@ -22,9 +22,7 @@ public class SignalRWebClients: ISignalRWebClients
 
             var options = (SignalRWebClientOptions)objects[0];
 
-            var client = new SignalRWebClient(options);
-
-            return client;
+            return new SignalRWebClient(options);
         });
     }
 
