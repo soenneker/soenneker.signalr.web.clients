@@ -9,7 +9,7 @@ using System;
 namespace Soenneker.SignalR.Web.Clients;
 
 /// <inheritdoc cref="ISignalRWebClients"/>
-public class SignalRWebClients: ISignalRWebClients
+public sealed class SignalRWebClients: ISignalRWebClients
 {
     private readonly SingletonDictionary<SignalRWebClient> _clients;
 
@@ -48,15 +48,11 @@ public class SignalRWebClients: ISignalRWebClients
 
     public ValueTask DisposeAsync()
     {
-        GC.SuppressFinalize(this);
-
         return _clients.DisposeAsync();
     }
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
-
         _clients.Dispose();
     }
 }
