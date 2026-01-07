@@ -1,5 +1,5 @@
 using Soenneker.SignalR.Web.Clients.Abstract;
-using Soenneker.Utils.SingletonDictionary;
+using Soenneker.Dictionaries.Singletons;
 using Soenneker.SignalR.Web.Client;
 using Soenneker.SignalR.Web.Client.Options;
 using System.Threading.Tasks;
