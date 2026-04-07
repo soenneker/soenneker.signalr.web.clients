@@ -34,7 +34,7 @@ public interface ISignalRWebClients : IAsyncDisposable, IDisposable
     /// </summary>
     /// <param name="id">The identifier of the SignalR web client to remove.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    ValueTask Remove(string id);
+    ValueTask<bool> Remove(string id);
 
     /// <summary>
     /// Synchronously removes a SignalR web client by its identifier.

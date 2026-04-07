@@ -27,7 +27,7 @@ public sealed class SignalRWebClients: ISignalRWebClients
         return _clients.GetSync(id, options, cancellationToken);
     }
 
-    public ValueTask Remove(string id)
+    public ValueTask<bool> Remove(string id)
     {
         return _clients.Remove(id);
     }
