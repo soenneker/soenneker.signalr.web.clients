@@ -18,6 +18,11 @@ public static class SignalRWebClientsRegistrar
         return services;
     }
 
+    /// <summary>
+    /// Adds signal r web clients as scoped.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The result of the operation.</returns>
     public static IServiceCollection AddSignalRWebClientsAsScoped(this IServiceCollection services)
     {
         services.TryAddScoped<ISignalRWebClients, SignalRWebClients>();
