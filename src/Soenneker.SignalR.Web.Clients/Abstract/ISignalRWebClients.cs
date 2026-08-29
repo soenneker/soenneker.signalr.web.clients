@@ -14,10 +14,10 @@ public interface ISignalRWebClients : IAsyncDisposable, IDisposable
     /// <summary>
     /// Gets a SignalR web client by its identifier, creating it if it doesn't already exist.
     /// </summary>
-    /// <param name="id">The identifier of the SignalR web client.</param>
+    /// <param name="id">Identifier of the Signal R Web Clients instance or registration to target.</param>
     /// <param name="options">The options used to configure the SignalR web client.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the SignalR web client.</returns>
+    /// <returns>A task whose result is the requested signal R Web Client.</returns>
     ValueTask<SignalRWebClient> Get(string id, SignalRWebClientOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -33,7 +33,7 @@ public interface ISignalRWebClients : IAsyncDisposable, IDisposable
     /// Removes a SignalR web client by its identifier.
     /// </summary>
     /// <param name="id">The identifier of the SignalR web client to remove.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <returns>true if removes a SignalR web client by its identifier; otherwise, false.</returns>
     ValueTask<bool> Remove(string id);
 
     /// <summary>
