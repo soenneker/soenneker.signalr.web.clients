@@ -5,7 +5,7 @@ using Soenneker.SignalR.Web.Clients.Abstract;
 namespace Soenneker.SignalR.Web.Clients.Registrars;
 
 /// <summary>
-/// Providing async thread-safe resilient and dependable SignalR web client singletons
+/// Registers the keyed SignalR web-client collection.
 /// </summary>
 public static class SignalRWebClientsRegistrar
 {

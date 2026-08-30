@@ -5,45 +5,59 @@
 
 # Soenneker.SignalR.Web.Clients
 
-Providing async thread-safe resilient and dependable SignalR web client singletons.
+A thread-safe, keyed collection of reusable `SignalRWebClient` instances with coordinated creation and disposal.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Soenneker.SignalR.Web.Clients
 ```
 
-## Quick start
+## Registration
 
 ```csharp
 using Soenneker.SignalR.Web.Clients.Registrars;
-using Microsoft.Extensions.DependencyInjection;
 
-var services = new ServiceCollection();
-var result = services.AddSignalRWebClientsAsSingleton();
+builder.Services.AddSignalRWebClientsAsSingleton();
 ```
 
-Adds `ISignalRWebClients` as a singleton service.
+Use `AddSignalRWebClientsAsSingleton` when connections should live for the application lifetime. `AddSignalRWebClientsAsScoped` creates a separate keyed collection per dependency-injection scope and disposes its connections when that scope ends.
 
-## What you get
+## Creating and using a client
 
-- `ISignalRWebClients` — Providing async thread-safe resilient and dependable SignalR web client singletons.
-- `SignalRWebClientsRegistrar` — Providing async thread-safe resilient and dependable SignalR web client singletons.
+```csharp
+using Microsoft.AspNetCore.SignalR.Client;
+using Soenneker.SignalR.Web.Client.Options;
+using Soenneker.SignalR.Web.Clients.Abstract;
 
-## API at a glance
+public sealed class UpdateSubscriber(ISignalRWebClients clients)
+{
+    public async Task Start(CancellationToken cancellationToken)
+    {
+        var options = new SignalRWebClientOptions
+        {
+            HubUrl = "https://api.example.com/hubs/updates",
+            AccessTokenProvider = () => Task.FromResult(GetAccessToken())
+        };
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `ISignalRWebClients.Get(id, options, cancellationToken)` | Gets a SignalR web client by its identifier, creating it if it doesn't already exist. | A task whose result is the requested signal R Web Client. |
-| `ISignalRWebClients.GetSync(id, options, cancellationToken)` | Synchronously gets a SignalR web client by its identifier, creating it if it doesn't already exist. | The SignalR web client. |
-| `ISignalRWebClients.Remove(id)` | Removes a SignalR web client by its identifier. | true if removes a SignalR web client by its identifier; otherwise, false. |
-| `ISignalRWebClients.RemoveSync(id)` | Synchronously removes a SignalR web client by its identifier. | Returns no value; the requested change is complete when the method returns. |
-| `SignalRWebClientsRegistrar.AddSignalRWebClientsAsSingleton(services)` | Adds `ISignalRWebClients` as a singleton service. | The same service collection, so additional registrations can be chained. |
-| `SignalRWebClientsRegistrar.AddSignalRWebClientsAsScoped(services)` | Registers Signal R Web Clients with a scoped lifetime. | The same service collection, so additional registrations can be chained. |
+        var client = await clients.Get("updates", options, cancellationToken);
 
-## Practical notes
+        client.Connection.On<OrderUpdated>("OrderUpdated", Apply);
+        await client.StartConnection(cancellationToken);
+    }
+}
+```
 
-- Cancellation stops pending work; it does not undo work that has already completed.
-- Reuse the registered client instead of constructing one per operation.
-- Calls that return a cached or singleton value reuse the same instance until the owning service is disposed.
-- Dispose instances you own when their scope ends so held resources can be released.
+The identifier defines the cache entry. Concurrent calls for the same identifier receive the same client. Options are used only when that identifier is first created; later calls return the existing instance rather than reconfiguring it. Always supply valid options when an identifier may not exist yet.
+
+`Get` creates or retrieves a client but does not start its connection. Register hub handlers before calling `StartConnection`.
+
+## Removing clients
+
+```csharp
+bool removed = await clients.Remove("updates");
+```
+
+Removing an identifier also disposes that client and its underlying SignalR connection. A later `Get` creates a new instance. Prefer the asynchronous `Get` and `Remove` methods because SignalR connection disposal is asynchronous; the synchronous variants block until asynchronous cleanup completes.
+
+Disposing `ISignalRWebClients` disposes every cached client. Clients returned by the collection are owned by the collection and should not be disposed independently.
