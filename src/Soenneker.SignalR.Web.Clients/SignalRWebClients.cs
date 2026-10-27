@@ -1,56 +1,108 @@
-using Soenneker.SignalR.Web.Clients.Abstract;
-using Soenneker.Dictionaries.Singletons;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Soenneker.SignalR.Web.Client;
 using Soenneker.SignalR.Web.Client.Options;
-using System.Threading.Tasks;
-using System.Threading;
+using Soenneker.SignalR.Web.Clients.Abstract;
 
 namespace Soenneker.SignalR.Web.Clients;
 
-/// <inheritdoc cref="ISignalRWebClients"/>
-public sealed class SignalRWebClients: ISignalRWebClients
+public sealed class SignalRWebClients : ISignalRWebClients
 {
-    private readonly SingletonDictionary<SignalRWebClient, SignalRWebClientOptions> _clients;
+    private readonly object _gate = new();
+    private readonly Dictionary<string, ClientEntry> _clients = new(StringComparer.Ordinal);
+    private readonly int _capacity;
+    private readonly bool _rejectConflicts;
+    private bool _disposed;
+    private Task? _disposal;
 
-    public SignalRWebClients()
+    public SignalRWebClients() : this(new SignalRWebClientsOptions()) { }
+
+    public SignalRWebClients(SignalRWebClientsOptions options)
     {
-        _clients = new SingletonDictionary<SignalRWebClient, SignalRWebClientOptions>(options => new SignalRWebClient(options));
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.Capacity, 1);
+        _capacity = options.Capacity;
+        _rejectConflicts = options.RejectConfigurationConflicts;
     }
 
-    public ValueTask<SignalRWebClient> Get(string id, SignalRWebClientOptions? options = null, CancellationToken cancellationToken = default)
+    public async ValueTask<SignalRWebClient> Get(string id, SignalRWebClientOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return _clients.Get(id, options, cancellationToken);
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Task removing;
+            lock (_gate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                if (_clients.TryGetValue(id, out ClientEntry? entry))
+                {
+                    if (entry.Removal == null)
+                    {
+                        if (options != null && _rejectConflicts && !entry.Configuration.Matches(options))
+                            throw new InvalidOperationException("This identifier is registered with different options. Remove it before changing configuration, or use a separate tenant/user identifier.");
+                        return entry.Client;
+                    }
+                    removing = entry.Removal;
+                }
+                else
+                {
+                    ArgumentNullException.ThrowIfNull(options);
+                    if (_clients.Count >= _capacity) throw new InvalidOperationException("The SignalR client collection is at capacity. Remove an unused client before adding another.");
+                    var configuration = new ClientConfiguration(options);
+                    var client = new SignalRWebClient(configuration.Options);
+                    _clients.Add(id, new ClientEntry(client, configuration));
+                    return client;
+                }
+            }
+            await removing.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
-    public SignalRWebClient GetSync(string id, SignalRWebClientOptions? options = null, CancellationToken cancellationToken = default)
+    public SignalRWebClient GetSync(string id, SignalRWebClientOptions? options = null, CancellationToken cancellationToken = default) =>
+        Get(id, options, cancellationToken).AsTask().GetAwaiter().GetResult();
+
+    public async ValueTask<bool> Remove(string id)
     {
-        return _clients.GetSync(id, options, cancellationToken);
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        Task removal;
+        bool owner;
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (!_clients.TryGetValue(id, out ClientEntry? entry)) return false;
+            owner = entry.Removal == null;
+            removal = BeginRemove(id, entry);
+        }
+        await removal.ConfigureAwait(false);
+        return owner;
     }
 
-    public ValueTask<bool> Remove(string id)
+    private Task BeginRemove(string id, ClientEntry entry) => entry.Removal ??= Task.Run(async () =>
     {
-        return _clients.Remove(id);
-    }
+        try { await entry.Client.DisposeAsync().ConfigureAwait(false); }
+        finally
+        {
+            lock (_gate)
+                if (_clients.TryGetValue(id, out ClientEntry? current) && ReferenceEquals(current, entry)) _clients.Remove(id);
+        }
+    });
 
-    public void RemoveSync(string id)
-    {
-        _clients.RemoveSync(id);
-    }
+    public void RemoveSync(string id) => Remove(id).AsTask().GetAwaiter().GetResult();
 
-    /// <summary>
-    /// Asynchronously releases resources used by the current instance.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     public ValueTask DisposeAsync()
     {
-        return _clients.DisposeAsync();
+        lock (_gate)
+        {
+            if (_disposal != null) return new ValueTask(_disposal);
+            _disposed = true;
+            _disposal = Task.WhenAll(_clients.Select(pair => BeginRemove(pair.Key, pair.Value)).ToArray());
+            return new ValueTask(_disposal);
+        }
     }
 
-    /// <summary>
-    /// Releases resources used by the current instance.
-    /// </summary>
-    public void Dispose()
-    {
-        _clients.Dispose();
-    }
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }

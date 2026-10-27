@@ -45,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.SignalR.Web.Client" Version="11.0.862" />
-        <PackageReference Include="Soenneker.Dictionaries.Singletons" Version="11.0.133" />
+        <PackageReference Include="Soenneker.SignalR.Web.Client" Version="11.0.862" Condition="'$(UseLocalSignalR)' != 'true'" />
+        <ProjectReference Include="..\..\..\soenneker.signalr.web.client\src\Soenneker.SignalR.Web.Client\Soenneker.SignalR.Web.Client.csproj" Condition="'$(UseLocalSignalR)' == 'true'" />
     </ItemGroup>
 </Project>

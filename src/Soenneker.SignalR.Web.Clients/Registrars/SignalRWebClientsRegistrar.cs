@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Soenneker.SignalR.Web.Clients.Abstract;
 
@@ -29,5 +30,25 @@ public static class SignalRWebClientsRegistrar
     {
         services.TryAddScoped<ISignalRWebClients, SignalRWebClients>();
         return services;
+    }
+
+    /// <summary>Registers an application-owned collection with explicit capacity and conflict settings.</summary>
+    public static IServiceCollection AddSignalRWebClientsAsSingleton(this IServiceCollection services, Action<SignalRWebClientsOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        var options = new SignalRWebClientsOptions();
+        configure(options);
+        services.TryAddSingleton(options);
+        return services.AddSignalRWebClientsAsSingleton();
+    }
+
+    /// <summary>Registers a collection per scope with explicit capacity and conflict settings.</summary>
+    public static IServiceCollection AddSignalRWebClientsAsScoped(this IServiceCollection services, Action<SignalRWebClientsOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        var options = new SignalRWebClientsOptions();
+        configure(options);
+        services.TryAddSingleton(options);
+        return services.AddSignalRWebClientsAsScoped();
     }
 }
